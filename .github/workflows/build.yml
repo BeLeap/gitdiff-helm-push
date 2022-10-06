@@ -1,0 +1,40 @@
+name: Build
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "[SETUP] checkout"
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: dist
+      - name: "[SETUP] gitconfig"
+        run: |
+          git config user.name "Github"
+          git config user.email "no-reply@github.com"
+      - name: "[SETUP] merge"
+        run: |
+          git merge -Xtheirs origin/main
+      - name: "[SETUP] install"
+        run: yarn
+      - name: "[BUILD] build"
+        run: yarn build
+      - name: "[WRAPUP] upload"
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+          git add .
+          git add -f dist
+
+          git commit -m "build ${{ github.ref_name }}" --allow-empty
+
+          git push
+
+          git tag -f ${{ github.ref_name }}
+          git push -f origin ${{ github.ref_name }}
+
