@@ -37,10 +37,32 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {
           "packageLocation": "./",
           "packageDependencies": [
+            ["@actions/core", "npm:1.10.0"],
             ["@swc/cli", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:0.1.57"],
             ["@swc/core", "npm:1.3.5"]
           ],
           "linkType": "SOFT",
+        }]
+      ]],
+      ["@actions/core", [
+        ["npm:1.10.0", {
+          "packageLocation": "./.yarn/cache/@actions-core-npm-1.10.0-6885534582-6a9908c190.zip/node_modules/@actions/core/",
+          "packageDependencies": [
+            ["@actions/core", "npm:1.10.0"],
+            ["@actions/http-client", "npm:2.0.1"],
+            ["uuid", "npm:8.3.2"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["@actions/http-client", [
+        ["npm:2.0.1", {
+          "packageLocation": "./.yarn/cache/@actions-http-client-npm-2.0.1-8d69921341-5dd4b34b25.zip/node_modules/@actions/http-client/",
+          "packageDependencies": [
+            ["@actions/http-client", "npm:2.0.1"],
+            ["tunnel", "npm:0.0.6"]
+          ],
+          "linkType": "HARD",
         }]
       ]],
       ["@nodelib/fs.scandir", [
@@ -408,6 +430,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",
           "packageDependencies": [
             ["root-workspace-0b6124", "workspace:."],
+            ["@actions/core", "npm:1.10.0"],
             ["@swc/cli", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:0.1.57"],
             ["@swc/core", "npm:1.3.5"]
           ],
@@ -448,6 +471,24 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["to-regex-range", "npm:5.0.1"],
             ["is-number", "npm:7.0.0"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["tunnel", [
+        ["npm:0.0.6", {
+          "packageLocation": "./.yarn/cache/tunnel-npm-0.0.6-b1c0830ea4-78fbb1a55a.zip/node_modules/tunnel/",
+          "packageDependencies": [
+            ["tunnel", "npm:0.0.6"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["uuid", [
+        ["npm:8.3.2", {
+          "packageLocation": "./.yarn/cache/uuid-npm-8.3.2-eca0baba53-aed2bcef34.zip/node_modules/uuid/",
+          "packageDependencies": [
+            ["uuid", "npm:8.3.2"]
           ],
           "linkType": "HARD",
         }]
