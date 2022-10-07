@@ -1,4 +1,5 @@
 import * as core from "@actions/core";
+import { context } from "@actions/github";
 
 async function run() {
   // Load acitons input
@@ -7,6 +8,13 @@ async function run() {
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
 
   core.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
+
+  switch (context.eventName) {
+    case 'push':
+      break;
+    default:
+      core.error(`${context.eventName} not supported`);
+  }
 }
 
 run();
