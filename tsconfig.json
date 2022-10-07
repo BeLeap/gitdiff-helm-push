@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": [
+      "es2015"
+    ],
     "outDir": "dist",
 
     "alwaysStrict": true,
