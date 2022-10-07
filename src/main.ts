@@ -1,1 +1,3 @@
-console.log("hello world!");
+import * as core from "@actions/core";
+
+core.warning("hello, world")
