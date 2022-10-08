@@ -15,6 +15,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@actions/exec@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@actions/exec@npm:1.1.1"
+  dependencies:
+    "@actions/io": ^1.0.1
+  checksum: d976e66dd51ab03d76a143da8e1406daa1bcdee06046168e6e0bec681c87a12999eefaad7a81cb81f28e4190610f55a58b8458ae4b82cbaaba13200490f4e8c2
+  languageName: node
+  linkType: hard
+
 "@actions/github@npm:^5.1.1":
   version: 5.1.1
   resolution: "@actions/github@npm:5.1.1"
@@ -33,6 +42,13 @@ __metadata:
   dependencies:
     tunnel: ^0.0.6
   checksum: 799ec3df91e28a9da91ce6592e94f8b8923ccf6cc21a2f72c7429be5af5273f1625335411adc2a1bb222d56c852d5767214dfa6fa32a6da7e81dba8290e08f17
+  languageName: node
+  linkType: hard
+
+"@actions/io@npm:^1.0.1":
+  version: 1.1.2
+  resolution: "@actions/io@npm:1.1.2"
+  checksum: 3c6583c4557abf6c95e9cfc9b6377045e65ba2c5dd4863f4feedd6be9daf4f6b60e588ab0151d5626b5f8320a37f05b8d44ab5c329b8c19f65be31b0616e1464
   languageName: node
   linkType: hard
 
@@ -444,6 +460,7 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@actions/core": ^1.10.0
+    "@actions/exec": ^1.1.1
     "@actions/github": ^5.1.1
     "@types/node": ^18.8.3
     "@yarnpkg/esbuild-plugin-pnp": ^3.0.0-rc.15

@@ -29,6 +29,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",\
           "packageDependencies": [\
             ["@actions/core", "npm:1.10.0"],\
+            ["@actions/exec", "npm:1.1.1"],\
             ["@actions/github", "npm:5.1.1"],\
             ["@types/node", "npm:18.8.3"],\
             ["@yarnpkg/esbuild-plugin-pnp", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:3.0.0-rc.15"],\
@@ -45,6 +46,16 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@actions/core", "npm:1.10.0"],\
             ["@actions/http-client", "npm:2.0.1"],\
             ["uuid", "npm:8.3.2"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@actions/exec", [\
+        ["npm:1.1.1", {\
+          "packageLocation": "./.yarn/cache/@actions-exec-npm-1.1.1-90973d2f96-d976e66dd5.zip/node_modules/@actions/exec/",\
+          "packageDependencies": [\
+            ["@actions/exec", "npm:1.1.1"],\
+            ["@actions/io", "npm:1.1.2"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -68,6 +79,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["@actions/http-client", "npm:2.0.1"],\
             ["tunnel", "npm:0.0.6"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@actions/io", [\
+        ["npm:1.1.2", {\
+          "packageLocation": "./.yarn/cache/@actions-io-npm-1.1.2-3870ce0be8-3c6583c455.zip/node_modules/@actions/io/",\
+          "packageDependencies": [\
+            ["@actions/io", "npm:1.1.2"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -542,6 +562,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["root-workspace-0b6124", "workspace:."],\
             ["@actions/core", "npm:1.10.0"],\
+            ["@actions/exec", "npm:1.1.1"],\
             ["@actions/github", "npm:5.1.1"],\
             ["@types/node", "npm:18.8.3"],\
             ["@yarnpkg/esbuild-plugin-pnp", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:3.0.0-rc.15"],\
