@@ -5,7 +5,7 @@ import path from "path";
 async function run() {
   // Load acitons input
   const githubToken = core.getInput("github-token");
-  
+
   const chartmuseumUrl = core.getInput("chartmuseum-url", { required: true });
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
@@ -28,7 +28,7 @@ async function run() {
 
   // Process diff
   const diffingFiles = data.files ?? [];
-  const diffingDirs = diffingFiles.map(it => path.dirname(it.filename))
+  const diffingDirs = diffingFiles.filter(it => it.filename.includes("Chart.yaml")).map(it => path.dirname(it.filename))
 
   core.info(JSON.stringify(diffingDirs));
 }
