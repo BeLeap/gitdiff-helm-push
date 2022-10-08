@@ -1,6 +1,8 @@
 name: 'GitDiff Helm Push'
 description: 'Check git diff & Push charts'
 inputs:
+  github-token:
+    required: false
   chartmuseum-url:
     required: true
   chartmuseum-username:

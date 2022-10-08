@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { context } from "@actions/github";
+import { context, getOctokit } from "@actions/github";
 
 interface CustomContext {
   repo: {
@@ -12,6 +12,8 @@ interface CustomContext {
 
 async function run() {
   // Load acitons input
+  const githubToken = core.getInput("github-token");
+  
   const chartmuseumUrl = core.getInput("chartmuseum-url", { required: true });
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
@@ -32,6 +34,15 @@ async function run() {
   }
 
   core.info(JSON.stringify(customContext));
+
+  const octokit = getOctokit(githubToken);
+  const { data } = await octokit.rest.repos.compareCommits({
+    ...customContext.repo,
+    base: customContext.before,
+    head: customContext.after,
+  });
+
+  core.info(JSON.stringify(data));
 }
 
 run();
