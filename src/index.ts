@@ -11,6 +11,8 @@ async function run() {
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
 
+  core.setSecret(chartmuseumPassword);
+
   core.debug("Loaded actions input");
   core.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
 
@@ -42,6 +44,19 @@ async function run() {
   await exec.exec("chmod 700 get_helm.sh");
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
+
+  core.debug("Install helm-push plugin");
+  await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
+  core.debug("Installed helm-push plugin");
+
+  core.debug("Add chartmuseum");
+  await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
+  core.debug("Added chartmuseum");
+
+  const uploadPromises = diffingDirs.map(async it => {
+    return exec.exec(`helm cm-push ${it} chartmuseum`);
+  });
+  Promise.all(uploadPromises);
 }
 
 run();
