@@ -7535,11 +7535,11 @@ var require_github = __commonJS({
     var Context = __importStar(require_context());
     var utils_1 = require_utils4();
     exports.context = new Context.Context();
-    function getOctokit(token, options, ...additionalPlugins) {
+    function getOctokit2(token, options, ...additionalPlugins) {
       const GitHubWithPlugins = utils_1.GitHub.plugin(...additionalPlugins);
       return new GitHubWithPlugins(utils_1.getOctokitOptions(token, options));
     }
-    exports.getOctokit = getOctokit;
+    exports.getOctokit = getOctokit2;
   }
 });
 
@@ -7547,6 +7547,7 @@ var require_github = __commonJS({
 var core = __toESM(require_core());
 var import_github = __toESM(require_github());
 async function run() {
+  const githubToken = core.getInput("github-token");
   const chartmuseumUrl = core.getInput("chartmuseum-url", { required: true });
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
@@ -7564,6 +7565,13 @@ async function run() {
       throw new Error(`${import_github.context.eventName} not supported`);
   }
   core.info(JSON.stringify(customContext));
+  const octokit = (0, import_github.getOctokit)(githubToken);
+  const { data } = await octokit.rest.repos.compareCommits({
+    ...customContext.repo,
+    base: customContext.before,
+    head: customContext.after
+  });
+  core.info(JSON.stringify(data));
 }
 run();
 /*!
