@@ -7564,7 +7564,7 @@ async function run() {
   });
   core.debug(JSON.stringify(data));
   const diffingFiles = data.files ?? [];
-  const diffingDirs = diffingFiles.map((it) => import_path.default.dirname(it.filename));
+  const diffingDirs = diffingFiles.filter((it) => it.filename.includes("Chart.yaml")).map((it) => import_path.default.dirname(it.filename));
   core.info(JSON.stringify(diffingDirs));
 }
 run();
