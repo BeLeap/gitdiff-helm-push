@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import path from "path";
+import * as exec from "@actions/exec";
 
 async function run() {
   core.debug("Loading actions input");
@@ -35,6 +36,10 @@ async function run() {
   const diffingDirs = diffingFiles.filter(it => it.filename.includes("Chart.yaml")).map(it => path.dirname(it.filename))
   core.debug("Processed diff");
   core.debug(JSON.stringify(diffingDirs));
+
+  core.debug("Install helm");
+  exec.exec("curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash");
+  core.debug("Installed helm");
 }
 
 run();
