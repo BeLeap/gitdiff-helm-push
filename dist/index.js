@@ -8627,7 +8627,7 @@ async function run() {
   core.debug("Processed diff");
   core.debug(JSON.stringify(diffingDirs));
   core.debug("Install helm");
-  await exec.exec("curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3");
+  await exec.exec("curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3");
   await exec.exec("chmod 700 get_helm.sh");
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
