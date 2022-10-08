@@ -7,7 +7,7 @@ async function run() {
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
 
-  core.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
+  core.info(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
 
   switch (context.eventName) {
     case 'push':
