@@ -1,15 +1,6 @@
 import * as core from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 
-interface CustomContext {
-  repo: {
-    owner: string;
-    repo: string;
-  };
-  before: string;
-  after: string;
-}
-
 async function run() {
   // Load acitons input
   const githubToken = core.getInput("github-token");
@@ -20,26 +11,15 @@ async function run() {
 
   core.info(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
 
-  let customContext: CustomContext;
-  switch (context.eventName) {
-    case 'push':
-      customContext = {
-        repo: context.repo,
-        after: context.payload["after"],
-        before: context.payload["before"],
-      }
-      break;
-    default:
-      throw new Error(`${context.eventName} not supported`);
+  if (context.eventName !== "push") {
+    throw new Error(`${context.eventName} not supported`);
   }
-
-  core.info(JSON.stringify(customContext));
 
   const octokit = getOctokit(githubToken);
   const { data } = await octokit.rest.repos.compareCommits({
-    ...customContext.repo,
-    base: customContext.before,
-    head: customContext.after,
+    ...context.repo,
+    base: context.payload["before"],
+    head: context.payload["after"],
   });
 
   core.info(JSON.stringify(data));
