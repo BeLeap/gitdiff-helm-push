@@ -881,18 +881,18 @@ var require_tunnel = __commonJS({
             res.statusCode
           );
           socket.destroy();
-          var error2 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
-          error2.code = "ECONNRESET";
-          options.request.emit("error", error2);
+          var error = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
+          error.code = "ECONNRESET";
+          options.request.emit("error", error);
           self.removeSocket(placeholder);
           return;
         }
         if (head.length > 0) {
           debug("got illegal response body from proxy");
           socket.destroy();
-          var error2 = new Error("got illegal response body from proxy");
-          error2.code = "ECONNRESET";
-          options.request.emit("error", error2);
+          var error = new Error("got illegal response body from proxy");
+          error.code = "ECONNRESET";
+          options.request.emit("error", error);
           self.removeSocket(placeholder);
           return;
         }
@@ -907,9 +907,9 @@ var require_tunnel = __commonJS({
           cause.message,
           cause.stack
         );
-        var error2 = new Error("tunneling socket could not be established, cause=" + cause.message);
-        error2.code = "ECONNRESET";
-        options.request.emit("error", error2);
+        var error = new Error("tunneling socket could not be established, cause=" + cause.message);
+        error.code = "ECONNRESET";
+        options.request.emit("error", error);
         self.removeSocket(placeholder);
       }
     };
@@ -1701,12 +1701,12 @@ var require_oidc_utils = __commonJS({
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
           const httpclient = OidcClient.createHttpClient();
-          const res = yield httpclient.getJson(id_token_url).catch((error2) => {
+          const res = yield httpclient.getJson(id_token_url).catch((error) => {
             throw new Error(`Failed to get ID Token. 
  
-        Error Code : ${error2.statusCode}
+        Error Code : ${error.statusCode}
  
-        Error Message: ${error2.result.message}`);
+        Error Message: ${error.result.message}`);
           });
           const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
           if (!id_token) {
@@ -1727,8 +1727,8 @@ var require_oidc_utils = __commonJS({
             const id_token = yield OidcClient.getCall(id_token_url);
             core_1.setSecret(id_token);
             return id_token;
-          } catch (error2) {
-            throw new Error(`Error message: ${error2.message}`);
+          } catch (error) {
+            throw new Error(`Error message: ${error.message}`);
           }
         });
       }
@@ -2094,7 +2094,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     exports.setCommandEcho = setCommandEcho;
     function setFailed(message) {
       process.exitCode = ExitCode.Failure;
-      error2(message);
+      error(message);
     }
     exports.setFailed = setFailed;
     function isDebug() {
@@ -2105,10 +2105,10 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       command_1.issueCommand("debug", {}, message);
     }
     exports.debug = debug;
-    function error2(message, properties = {}) {
+    function error(message, properties = {}) {
       command_1.issueCommand("error", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
-    exports.error = error2;
+    exports.error = error;
     function warning(message, properties = {}) {
       command_1.issueCommand("warning", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
@@ -2365,8 +2365,8 @@ var require_add = __commonJS({
       }
       if (kind === "error") {
         hook = function(method, options) {
-          return Promise.resolve().then(method.bind(null, options)).catch(function(error2) {
-            return orig(error2, options);
+          return Promise.resolve().then(method.bind(null, options)).catch(function(error) {
+            return orig(error, options);
           });
         };
       }
@@ -3053,21 +3053,21 @@ var require_tr46 = __commonJS({
         label = punycode.toUnicode(label);
         processing_option = PROCESSING_OPTIONS.NONTRANSITIONAL;
       }
-      var error2 = false;
+      var error = false;
       if (normalize(label) !== label || label[3] === "-" && label[4] === "-" || label[0] === "-" || label[label.length - 1] === "-" || label.indexOf(".") !== -1 || label.search(combiningMarksRegex) === 0) {
-        error2 = true;
+        error = true;
       }
       var len = countSymbols(label);
       for (var i = 0; i < len; ++i) {
         var status = findStatus(label.codePointAt(i));
         if (processing === PROCESSING_OPTIONS.TRANSITIONAL && status[1] !== "valid" || processing === PROCESSING_OPTIONS.NONTRANSITIONAL && status[1] !== "valid" && status[1] !== "deviation") {
-          error2 = true;
+          error = true;
           break;
         }
       }
       return {
         label,
-        error: error2
+        error
       };
     }
     function processing(domain_name, useSTD3, processing_option) {
@@ -4717,8 +4717,8 @@ var require_lib3 = __commonJS({
       this.timeout = timeout;
       if (body instanceof Stream) {
         body.on("error", function(err) {
-          const error2 = err.name === "AbortError" ? err : new FetchError(`Invalid response body while trying to fetch ${_this.url}: ${err.message}`, "system", err);
-          _this[INTERNALS].error = error2;
+          const error = err.name === "AbortError" ? err : new FetchError(`Invalid response body while trying to fetch ${_this.url}: ${err.message}`, "system", err);
+          _this[INTERNALS].error = error;
         });
       }
     }
@@ -5448,14 +5448,14 @@ var require_lib3 = __commonJS({
         const signal = request.signal;
         let response = null;
         const abort = function abort2() {
-          let error2 = new AbortError("The user aborted a request.");
-          reject(error2);
+          let error = new AbortError("The user aborted a request.");
+          reject(error);
           if (request.body && request.body instanceof Stream.Readable) {
-            request.body.destroy(error2);
+            request.body.destroy(error);
           }
           if (!response || !response.body)
             return;
-          response.body.emit("error", error2);
+          response.body.emit("error", error);
         };
         if (signal && signal.aborted) {
           abort();
@@ -5850,7 +5850,7 @@ var require_dist_node5 = __commonJS({
         }
         if (status >= 400) {
           const data = await getResponseData(response);
-          const error2 = new requestError.RequestError(toErrorMessage(data), status, {
+          const error = new requestError.RequestError(toErrorMessage(data), status, {
             response: {
               url,
               status,
@@ -5859,7 +5859,7 @@ var require_dist_node5 = __commonJS({
             },
             request: requestOptions
           });
-          throw error2;
+          throw error;
         }
         return getResponseData(response);
       }).then((data) => {
@@ -5869,10 +5869,10 @@ var require_dist_node5 = __commonJS({
           headers,
           data
         };
-      }).catch((error2) => {
-        if (error2 instanceof requestError.RequestError)
-          throw error2;
-        throw new requestError.RequestError(error2.message, 500, {
+      }).catch((error) => {
+        if (error instanceof requestError.RequestError)
+          throw error;
+        throw new requestError.RequestError(error.message, 500, {
           request: requestOptions
         });
       });
@@ -7373,9 +7373,9 @@ var require_dist_node10 = __commonJS({
               return {
                 value: normalizedResponse
               };
-            } catch (error2) {
-              if (error2.status !== 409)
-                throw error2;
+            } catch (error) {
+              if (error.status !== 409)
+                throw error;
               url = "";
               return {
                 value: {
@@ -7551,12 +7551,19 @@ async function run() {
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
   core.info(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
+  let customContext;
   switch (import_github.context.eventName) {
     case "push":
+      customContext = {
+        repo: import_github.context.repo,
+        after: import_github.context.payload["after"],
+        before: import_github.context.payload["before"]
+      };
       break;
     default:
-      core.error(`${import_github.context.eventName} not supported`);
+      throw new Error(`${import_github.context.eventName} not supported`);
   }
+  core.info(JSON.stringify(customContext));
 }
 run();
 /*!
