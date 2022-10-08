@@ -2034,10 +2034,10 @@ var require_core = __commonJS({
       command_1.issueCommand("set-env", { name }, convertedVal);
     }
     exports.exportVariable = exportVariable;
-    function setSecret(secret) {
+    function setSecret2(secret) {
       command_1.issueCommand("add-mask", {}, secret);
     }
-    exports.setSecret = setSecret;
+    exports.setSecret = setSecret2;
     function addPath(inputPath) {
       const filePath = process.env["GITHUB_PATH"] || "";
       if (filePath) {
@@ -8604,6 +8604,7 @@ async function run() {
   const chartmuseumUrl = core.getInput("chartmuseum-url", { required: true });
   const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
   const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
+  core.setSecret(chartmuseumPassword);
   core.debug("Loaded actions input");
   core.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
   core.debug("Checking event type");
@@ -8631,6 +8632,16 @@ async function run() {
   await exec.exec("chmod 700 get_helm.sh");
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
+  core.debug("Install helm-push plugin");
+  await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
+  core.debug("Installed helm-push plugin");
+  core.debug("Add chartmuseum");
+  await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
+  core.debug("Added chartmuseum");
+  const uploadPromises = diffingDirs.map(async (it) => {
+    return exec.exec(`helm cm-push ${it} chartmuseum`);
+  });
+  Promise.all(uploadPromises);
 }
 run();
 /*!
