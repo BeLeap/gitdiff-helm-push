@@ -56,7 +56,7 @@ async function run() {
   const uploadPromises = diffingDirs.map(async it => {
     return exec.exec(`helm cm-push ${it} chartmuseum`);
   });
-  Promise.all(uploadPromises);
+  await Promise.all(uploadPromises);
 }
 
 run();
