@@ -2,7 +2,6 @@ import * as core from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import path from "path";
 import * as exec from "@actions/exec";
-import { stderr } from "process";
 
 async function run() {
   core.debug("Loading actions input");
