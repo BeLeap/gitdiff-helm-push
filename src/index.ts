@@ -47,7 +47,7 @@ async function run() {
   core.debug("Installed helm");
 
   core.debug("Check helm chart valid");
-  diffingDirs.forEach(async it => {
+  const lintPromises = diffingDirs.map(async it => {
     let lintCmdOptions: exec.ExecOptions = {}; 
     let lintStdout = "";
     let lintStderr = "";
@@ -60,14 +60,14 @@ async function run() {
       },
     };
 
-    try {
-      await exec.exec("helm", ["lint", it],lintCmdOptions)
-    } catch(err) {
-      core.error(lintStderr);
-    } finally {
-      core.info(lintStdout);
-    }
+    return exec.exec("helm", ["lint", it], lintCmdOptions)
+            .catch(() => {
+              core.error(lintStderr);
+            }).finally(() => {
+              core.info(lintStdout);
+            });
   });
+  await Promise.all(lintPromises);
   core.debug("Checked helm chart valid");
 
   core.debug("Install helm-push plugin");
@@ -79,7 +79,7 @@ async function run() {
   core.debug("Added chartmuseum");
 
   core.debug("Push chart");
-  diffingDirs.forEach(async it => {
+  const pushPromises = diffingDirs.map(async it => {
     let pushCmdOptions: exec.ExecOptions = {}; 
     let pushStdout = "";
     let pushStderr = "";
@@ -92,16 +92,16 @@ async function run() {
       },
     };
 
-    try {
-      await exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
-    } catch (err: any) {
-      core.error(pushStderr);
-      core.error(err.toString());
-      core.setFailed(`Failed to push ${it}`);
-    } finally {
-      core.info(pushStdout);
-    }
+    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
+            .catch((err: any) => {
+              core.error(pushStderr);
+              core.error(err.toString());
+              core.setFailed(`Failed to push ${it}`);
+            }).finally(() => {
+              core.info(pushStdout);
+            });
   });
+  await Promise.all(pushPromises);
   core.debug("Pushed chart")
 }
 
