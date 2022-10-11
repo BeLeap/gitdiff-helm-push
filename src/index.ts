@@ -50,19 +50,15 @@ async function run() {
   const lintPromises = diffingDirs.map(async it => {
     let lintCmdOptions: exec.ExecOptions = {}; 
     let lintStdout = "";
-    let lintStderr = "";
     lintCmdOptions.listeners = {
       stdout: (data: Buffer) => {
         lintStdout += data.toString();
-      },
-      stderr: (data: Buffer) => {
-        lintStderr += data.toString();
       },
     };
 
     return exec.exec("helm", ["lint", it], lintCmdOptions)
             .catch(() => {
-              core.error(lintStderr);
+              core.error(`${it} lint failed`);
             }).finally(() => {
               core.info(lintStdout);
             });
@@ -96,7 +92,7 @@ async function run() {
             .catch((err: any) => {
               core.error(pushStderr);
               core.error(err.toString());
-              core.setFailed(`Failed to push ${it}`);
+              core.setFailed(`${it} push failed`);
             }).finally(() => {
               core.info(pushStdout);
             });
