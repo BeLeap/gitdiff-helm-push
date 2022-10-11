@@ -8633,7 +8633,7 @@ async function run() {
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
   core.debug("Check helm chart valid");
-  diffingDirs.forEach(async (it) => {
+  const lintPromises = diffingDirs.map(async (it) => {
     let lintCmdOptions = {};
     let lintStdout = "";
     let lintStderr = "";
@@ -8645,14 +8645,13 @@ async function run() {
         lintStderr += data2.toString();
       }
     };
-    try {
-      await exec.exec("helm", ["lint", it], lintCmdOptions);
-    } catch (err) {
+    return exec.exec("helm", ["lint", it], lintCmdOptions).catch(() => {
       core.error(lintStderr);
-    } finally {
+    }).finally(() => {
       core.info(lintStdout);
-    }
+    });
   });
+  await Promise.all(lintPromises);
   core.debug("Checked helm chart valid");
   core.debug("Install helm-push plugin");
   await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
@@ -8661,7 +8660,7 @@ async function run() {
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
   core.debug("Added chartmuseum");
   core.debug("Push chart");
-  diffingDirs.forEach(async (it) => {
+  const pushPromises = diffingDirs.map(async (it) => {
     let pushCmdOptions = {};
     let pushStdout = "";
     let pushStderr = "";
@@ -8673,16 +8672,15 @@ async function run() {
         pushStderr += data2.toString();
       }
     };
-    try {
-      await exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions);
-    } catch (err) {
+    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).catch((err) => {
       core.error(pushStderr);
       core.error(err.toString());
       core.setFailed(`Failed to push ${it}`);
-    } finally {
+    }).finally(() => {
       core.info(pushStdout);
-    }
+    });
   });
+  await Promise.all(pushPromises);
   core.debug("Pushed chart");
 }
 run();
