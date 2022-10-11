@@ -8668,9 +8668,8 @@ async function run() {
         pushStderr += data2.toString();
       }
     };
-    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).catch((err) => {
+    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).catch(() => {
       core.error(pushStderr);
-      core.error(err.toString());
       core.setFailed(`${it} push failed`);
     }).finally(() => {
       core.info(pushStdout);
