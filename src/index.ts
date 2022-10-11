@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import path from "path";
 import * as exec from "@actions/exec";
+import { stderr } from "process";
 
 async function run() {
   core.debug("Loading actions input");
@@ -45,6 +46,27 @@ async function run() {
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
 
+  core.debug("Check helm chart valid");
+  diffingDirs.forEach(async it => {
+    let lintCmdOptions: exec.ExecOptions = {}; 
+    let lintStdout = "";
+    let lintStderr = "";
+    lintCmdOptions.listeners = {
+      stdout: (data: Buffer) => {
+        lintStdout += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        lintStderr += data.toString();
+      },
+    };
+
+    await exec.exec("helm", ["lint", it],lintCmdOptions)
+
+    core.info(lintStdout);
+    core.error(lintStderr);
+  });
+  core.debug("Checked helm chart valid");
+
   core.debug("Install helm-push plugin");
   await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
   core.debug("Installed helm-push plugin");
@@ -53,10 +75,28 @@ async function run() {
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
   core.debug("Added chartmuseum");
 
-  const uploadPromises = diffingDirs.map(async it => {
-    return exec.exec(`helm cm-push ${it} chartmuseum`);
+  core.debug("Push chart");
+  diffingDirs.forEach(async it => {
+    let pushCmdOptions: exec.ExecOptions = {}; 
+    let pushStdout = "";
+    let pushStderr = "";
+    pushCmdOptions.listeners = {
+      stdout: (data: Buffer) => {
+        pushStdout += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        pushStderr += data.toString();
+      },
+    };
+
+    await exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
+
+    if (pushStderr !== "") {
+      core.setFailed(`Failed to push ${it}`);
+    }
+    core.info(pushStdout);
   });
-  await Promise.all(uploadPromises);
+  core.debug("Pushed chart")
 }
 
 run();
