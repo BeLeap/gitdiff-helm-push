@@ -8636,17 +8636,13 @@ async function run() {
   const lintPromises = diffingDirs.map(async (it) => {
     let lintCmdOptions = {};
     let lintStdout = "";
-    let lintStderr = "";
     lintCmdOptions.listeners = {
       stdout: (data2) => {
         lintStdout += data2.toString();
-      },
-      stderr: (data2) => {
-        lintStderr += data2.toString();
       }
     };
     return exec.exec("helm", ["lint", it], lintCmdOptions).catch(() => {
-      core.error(lintStderr);
+      core.error(`${it} lint failed`);
     }).finally(() => {
       core.info(lintStdout);
     });
@@ -8675,7 +8671,7 @@ async function run() {
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).catch((err) => {
       core.error(pushStderr);
       core.error(err.toString());
-      core.setFailed(`Failed to push ${it}`);
+      core.setFailed(`${it} push failed`);
     }).finally(() => {
       core.info(pushStdout);
     });
