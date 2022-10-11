@@ -89,9 +89,8 @@ async function run() {
     };
 
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
-            .catch((err: any) => {
+            .catch(() => {
               core.error(pushStderr);
-              core.error(err.toString());
               core.setFailed(`${it} push failed`);
             }).finally(() => {
               core.info(pushStdout);
