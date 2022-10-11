@@ -60,10 +60,13 @@ async function run() {
       },
     };
 
-    await exec.exec("helm", ["lint", it],lintCmdOptions)
-
-    core.info(lintStdout);
-    core.error(lintStderr);
+    try {
+      await exec.exec("helm", ["lint", it],lintCmdOptions)
+    } catch(err) {
+      core.error(lintStderr);
+    } finally {
+      core.info(lintStdout);
+    }
   });
   core.debug("Checked helm chart valid");
 
@@ -89,12 +92,15 @@ async function run() {
       },
     };
 
-    await exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
-
-    if (pushStderr !== "") {
+    try {
+      await exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
+    } catch (err: any) {
+      core.error(pushStderr);
+      core.error(err.toString());
       core.setFailed(`Failed to push ${it}`);
+    } finally {
+      core.info(pushStdout);
     }
-    core.info(pushStdout);
   });
   core.debug("Pushed chart")
 }
