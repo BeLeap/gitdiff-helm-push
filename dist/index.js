@@ -11315,7 +11315,7 @@ async function run() {
       const chartInfo = load(fs.readFileSync(`${it}/Chart.yaml`, "utf-8"));
       return octokit.rest.git.createRef({
         ...import_github.context.repo,
-        ref: `refs/tags${chartInfo.name}-${chartInfo.version}`,
+        ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
         sha: import_github.context.payload["after"]
       });
     }).catch(() => {
