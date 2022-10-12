@@ -78,21 +78,17 @@ async function run() {
   core.debug("Push chart");
   const pushPromises = diffingDirs.map(async it => {
     let pushCmdOptions: exec.ExecOptions = {}; 
-    let pushStdout = "";
     let pushStderr = "";
     pushCmdOptions.listeners = {
-      stdout: (data: Buffer) => {
-        pushStdout += data.toString();
-      },
       stderr: (data: Buffer) => {
         pushStderr += data.toString();
       },
     };
 
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
-            .then(async () => {
+            .then(() => {
               const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${it}/Chart.yaml`, 'utf-8')) as any;
-              await octokit.rest.git.createTag({
+              return octokit.rest.git.createTag({
                 ...context.repo,
                 tag: `${chartInfo.name}-${chartInfo.version}`,
                 object: context.payload["after"],
@@ -103,8 +99,6 @@ async function run() {
             .catch(() => {
               core.error(pushStderr);
               core.setFailed(`${it} push failed`);
-            }).finally(() => {
-              core.info(pushStdout);
             });
   });
   await Promise.all(pushPromises);
