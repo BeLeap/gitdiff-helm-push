@@ -90,7 +90,7 @@ async function run() {
               const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${it}/Chart.yaml`, 'utf-8')) as any;
               return octokit.rest.git.createRef({
                 ...context.repo,
-                ref: `refs/tags${chartInfo.name}-${chartInfo.version}`,
+                ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
                 sha: context.payload["after"],
               });
             })
