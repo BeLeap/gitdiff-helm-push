@@ -11313,6 +11313,7 @@ async function run() {
     };
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).then(() => {
       const chartInfo = load(fs.readFileSync(`${it}/Chart.yaml`, "utf-8"));
+      core2.info(JSON.stringify(chartInfo));
       return octokit.rest.git.createTag({
         ...import_github.context.repo,
         tag: `${chartInfo.name}-${chartInfo.version}`,
