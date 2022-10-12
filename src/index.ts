@@ -2,6 +2,8 @@ import * as core from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import path from "path";
 import * as exec from "@actions/exec";
+import * as yaml from "js-yaml";
+import * as fs from "fs";
 
 async function run() {
   core.debug("Loading actions input");
@@ -88,6 +90,16 @@ async function run() {
     };
 
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
+            .then(async () => {
+              const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${it}/Chart.yaml`, 'utf-8')) as any;
+              await octokit.rest.git.createTag({
+                ...context.repo,
+                tag: `${chartInfo.name}-${chartInfo.version}`,
+                object: context.payload["after"],
+                type: 'commit',
+                message: `${chartInfo.name} ${chartInfo.version} Release`,
+              });
+            })
             .catch(() => {
               core.error(pushStderr);
               core.setFailed(`${it} push failed`);
