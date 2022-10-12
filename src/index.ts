@@ -88,7 +88,13 @@ async function run() {
     return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
             .then(() => {
               const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${it}/Chart.yaml`, 'utf-8')) as any;
-              core.info(JSON.stringify(chartInfo));
+              core.info(JSON.stringify({
+                ...context.repo,
+                tag: `${chartInfo.name}-${chartInfo.version}`,
+                object: context.payload["after"],
+                type: 'commit',
+                message: `${chartInfo.name} ${chartInfo.version} Release`,
+              }));
               return octokit.rest.git.createTag({
                 ...context.repo,
                 tag: `${chartInfo.name}-${chartInfo.version}`,
