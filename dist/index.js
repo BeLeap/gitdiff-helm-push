@@ -11302,6 +11302,22 @@ async function run() {
   core2.debug("Add chartmuseum");
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
   core2.debug("Added chartmuseum");
+  core2.debug("Build chart");
+  const buildPromises = diffingDirs.map(async (it) => {
+    let buildCmdOptions = {};
+    let buildStderr = "";
+    buildCmdOptions.listeners = {
+      stderr: (data2) => {
+        buildStderr += data2.toString();
+      }
+    };
+    return exec.exec("helm", ["dependency", "build", it], buildCmdOptions).catch(() => {
+      core2.error(buildStderr);
+      core2.setFailed(`${it} build failed`);
+    });
+  });
+  await Promise.all(buildPromises);
+  core2.debug("Built chart");
   core2.debug("Push chart");
   const pushPromises = diffingDirs.map(async (it) => {
     let pushCmdOptions = {};
