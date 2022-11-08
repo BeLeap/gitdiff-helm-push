@@ -75,6 +75,25 @@ async function run() {
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
   core.debug("Added chartmuseum");
 
+  core.debug("Build chart");
+  const buildPromises = diffingDirs.map(async it => {
+    let buildCmdOptions: exec.ExecOptions = {}; 
+    let buildStderr = "";
+    buildCmdOptions.listeners = {
+      stderr: (data: Buffer) => {
+        buildStderr += data.toString();
+      },
+    };
+
+    return exec.exec("helm", ["dependency", "build",  it], buildCmdOptions)
+            .catch(() => {
+              core.error(buildStderr);
+              core.setFailed(`${it} build failed`);
+            });
+  });
+  await Promise.all(buildPromises);
+  core.debug("Built chart")
+
   core.debug("Push chart");
   const pushPromises = diffingDirs.map(async it => {
     let pushCmdOptions: exec.ExecOptions = {}; 
