@@ -68,8 +68,12 @@ async function run() {
   core.debug("Checked helm chart valid");
 
   core.debug("Install helm-push plugin");
-  await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
-  core.debug("Installed helm-push plugin");
+  try {
+    await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
+    core.debug("Installed helm-push plugin");
+  } catch (err) {
+    core.debug("Failed to install helm-push plugin: maybe already exists");
+  }
 
   core.debug("Add chartmuseum");
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
