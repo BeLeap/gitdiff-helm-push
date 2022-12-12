@@ -11297,8 +11297,12 @@ async function run() {
   await Promise.all(lintPromises);
   core2.debug("Checked helm chart valid");
   core2.debug("Install helm-push plugin");
-  await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
-  core2.debug("Installed helm-push plugin");
+  try {
+    await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
+    core2.debug("Installed helm-push plugin");
+  } catch (err) {
+    core2.debug("Failed to install helm-push plugin: maybe already exists");
+  }
   core2.debug("Add chartmuseum");
   await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
   core2.debug("Added chartmuseum");
