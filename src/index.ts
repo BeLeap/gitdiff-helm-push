@@ -69,7 +69,7 @@ async function buildEnv(customContext: CustomContext): Promise<CustomContextWith
   }
 }
 
-async function build(dir: string): Promise<number | void> {
+async function build(dir: string): Promise<number> {
     let buildCmdOptions: exec.ExecOptions = {}; 
     let buildStderr = "";
     buildCmdOptions.listeners = {
@@ -79,13 +79,13 @@ async function build(dir: string): Promise<number | void> {
     };
 
     return exec.exec("helm", ["dependency", "build",  dir], buildCmdOptions)
-            .catch(() => {
-              core.error(buildStderr);
-              core.setFailed(`${dir} build failed`);
+            .catch((reason) => {
+              core.debug(buildStderr);
+              throw reason;
             });
 }
 
-async function lint(dir: string): Promise<number | void> {
+async function lint(dir: string): Promise<number> {
     let lintCmdOptions: exec.ExecOptions = {}; 
     let lintStdout = "";
     lintCmdOptions.listeners = {
@@ -95,14 +95,15 @@ async function lint(dir: string): Promise<number | void> {
     };
 
     return exec.exec("helm", ["lint", dir], lintCmdOptions)
-            .catch(() => {
-              core.error(`${dir} lint failed`);
+            .catch((reason) => {
+              core.debug(`${dir} lint failed`);
+              throw reason;
             }).finally(() => {
               core.info(lintStdout);
             });
 }
 
-async function push(ctx: CustomContextWithOctokit, dir: string): Promise<any> {
+async function push(dir: string): Promise<number> {
     let pushCmdOptions: exec.ExecOptions = {}; 
     let pushStderr = "";
     pushCmdOptions.listeners = {
@@ -112,24 +113,26 @@ async function push(ctx: CustomContextWithOctokit, dir: string): Promise<any> {
     };
 
     return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions)
-            .then(() => {
-              const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${dir}/Chart.yaml`, 'utf-8')) as any;
-              return ctx.github.octokit.rest.git.createRef({
-                ...ctx.actions.repo,
-                ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
-                sha: ctx.actions.payload["after"],
-              });
-            })
-            .catch(() => {
-              core.error(pushStderr);
-              core.setFailed(`${dir} push failed`);
+            .catch((reason) => {
+              core.debug(pushStderr);
+              throw reason;
             });
 }
 
-async function process(ctx: CustomContextWithOctokit,dir: string) {
-  await build(dir);
-  await lint(dir);
-  await push(ctx, dir);
+async function tag(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
+  const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${dir}/Chart.yaml`, 'utf-8')) as any;
+  await ctx.github.octokit.rest.git.createRef({
+    ...ctx.actions.repo,
+    ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
+    sha: ctx.actions.payload["after"],
+  });
+}
+
+async function process(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
+    await build(dir)
+    await lint(dir);
+    await push(dir);
+    await tag(ctx, dir);
 }
 
 async function run() {
@@ -154,7 +157,14 @@ async function run() {
   core.debug(JSON.stringify(diffingDirs));
 
   const promises = diffingDirs.map((it) => process(ctx, it));
-  await Promise.all(promises);
+  await Promise.allSettled(promises).then((results) => {
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        core.setFailed(result.reason);
+        throw result.reason;
+      }
+    });
+  });
 }
 
 run();
