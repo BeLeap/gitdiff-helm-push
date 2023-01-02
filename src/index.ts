@@ -69,7 +69,7 @@ async function buildEnv(customContext: CustomContext): Promise<CustomContextWith
   }
 }
 
-async function build(dir: string): Promise<number> {
+async function build(dir: string): Promise<void> {
     let buildCmdOptions: exec.ExecOptions = {}; 
     let buildStderr = "";
     buildCmdOptions.listeners = {
@@ -78,14 +78,15 @@ async function build(dir: string): Promise<number> {
       },
     };
 
-    return exec.exec("helm", ["dependency", "build",  dir], buildCmdOptions)
-            .catch((reason) => {
-              core.debug(buildStderr);
-              throw reason;
-            });
+    try {
+      await exec.exec("helm", ["dependency", "build",  dir], buildCmdOptions);
+    } catch (error) {
+      core.error(buildStderr);
+      throw error;
+    }
 }
 
-async function lint(dir: string): Promise<number> {
+async function lint(dir: string): Promise<void> {
     let lintCmdOptions: exec.ExecOptions = {}; 
     let lintStdout = "";
     lintCmdOptions.listeners = {
@@ -94,16 +95,16 @@ async function lint(dir: string): Promise<number> {
       },
     };
 
-    return exec.exec("helm", ["lint", dir], lintCmdOptions)
-            .catch((reason) => {
-              core.debug(`${dir} lint failed`);
-              throw reason;
-            }).finally(() => {
-              core.info(lintStdout);
-            });
+    try {
+      await exec.exec("helm", ["lint", dir], lintCmdOptions);
+    } catch {
+      core.warning(`${dir} lint failed`);
+    } finally {
+      core.info(lintStdout);
+    }
 }
 
-async function push(dir: string): Promise<number> {
+async function push(dir: string): Promise<void> {
     let pushCmdOptions: exec.ExecOptions = {}; 
     let pushStderr = "";
     pushCmdOptions.listeners = {
@@ -112,11 +113,12 @@ async function push(dir: string): Promise<number> {
       },
     };
 
-    return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions)
-            .catch((reason) => {
-              core.debug(pushStderr);
-              throw reason;
-            });
+    try {
+      await exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions);
+    } catch (error) {
+      core.error(pushStderr);
+      throw error;
+    }
 }
 
 async function tag(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
