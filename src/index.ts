@@ -4,42 +4,45 @@ import path from "path";
 import * as exec from "@actions/exec";
 import * as yaml from "js-yaml";
 import * as fs from "fs";
+import { GitHub } from "@actions/github/lib/utils";
 
-async function run() {
-  core.debug("Loading actions input");
-  const githubToken = core.getInput("github-token");
+type ActionsContext = typeof context;
 
-  const chartmuseumUrl = core.getInput("chartmuseum-url", { required: true });
-  const chartmuseumUsername = core.getInput("chartmuseum-username", { required: true });
-  const chartmuseumPassword = core.getInput("chartmuseum-password", { required: true });
+type GithubContext = { token: string };
+type GithubContextWithOctokit = GithubContext & { octokit: InstanceType<typeof GitHub> };
 
-  core.setSecret(chartmuseumPassword);
+type ChartmuseumContext = {
+  url: string;
+  username: string;
+  password: string;
+};
 
-  core.debug("Loaded actions input");
-  core.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
+type CustomContext = {
+  actions: ActionsContext;
+  github: GithubContext;
+  chartmuseum: ChartmuseumContext;
+}
 
-  core.debug("Checking event type");
-  if (context.eventName !== "push") {
-    throw new Error(`${context.eventName} not supported`);
-  }
+async function prepareContext(actions: ActionsContext): Promise<CustomContext> {
+  const customContext: CustomContext = {
+    actions: actions,
+    github: {
+      token: core.getInput("github-token"),
+    },
+    chartmuseum: {
+      url: core.getInput("chartmuseum-url", { required: true }),
+      username: core.getInput("chartmuseum-username", { required: true }),
+      password: core.getInput("chartmuseum-password", { required: true }),
+    },
+  };
+  core.setSecret(customContext.chartmuseum.password);
 
-  core.debug("Build octokit");
-  const octokit = getOctokit(githubToken);
-  core.debug("Built octokit");
-  core.debug("Request diff");
-  const { data } = await octokit.rest.repos.compareCommits({
-    ...context.repo,
-    base: context.payload["before"],
-    head: context.payload["after"],
-  });
-  core.debug("Requested diff");
+  return customContext;
+}
 
-  core.debug("Process diff");
-  core.debug(JSON.stringify(data.files));
-  const diffingFiles = data.files ?? [];
-  const diffingDirs = diffingFiles.filter(it => it.filename.includes("Chart.yaml")).map(it => path.dirname(it.filename))
-  core.debug("Processed diff");
-  core.debug(JSON.stringify(diffingDirs));
+type CustomContextWithOctokit = CustomContext & { github: GithubContextWithOctokit }
+async function buildEnv(customContext: CustomContext): Promise<CustomContextWithOctokit> {
+  const octokit = getOctokit(customContext.github.token);
 
   core.debug("Install helm");
   await exec.exec("curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3");
@@ -47,40 +50,26 @@ async function run() {
   await exec.exec("./get_helm.sh");
   core.debug("Installed helm");
 
-  core.debug("Check helm chart valid");
-  const lintPromises = diffingDirs.map(async it => {
-    let lintCmdOptions: exec.ExecOptions = {}; 
-    let lintStdout = "";
-    lintCmdOptions.listeners = {
-      stdout: (data: Buffer) => {
-        lintStdout += data.toString();
-      },
-    };
-
-    return exec.exec("helm", ["lint", it], lintCmdOptions)
-            .catch(() => {
-              core.error(`${it} lint failed`);
-            }).finally(() => {
-              core.info(lintStdout);
-            });
-  });
-  await Promise.all(lintPromises);
-  core.debug("Checked helm chart valid");
-
-  core.debug("Install helm-push plugin");
   try {
     await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
     core.debug("Installed helm-push plugin");
   } catch (err) {
-    core.debug("Failed to install helm-push plugin: maybe already exists");
+    core.info("Failed to install helm-push plugin: maybe already exists");
   }
 
   core.debug("Add chartmuseum");
-  await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
-  core.debug("Added chartmuseum");
+  await exec.exec(`helm repo add chartmuseum ${customContext.chartmuseum.url} --username ${customContext.chartmuseum.username} --password ${customContext.chartmuseum.password}`);
 
-  core.debug("Build chart");
-  const buildPromises = diffingDirs.map(async it => {
+  return {
+    ...customContext,
+    github: {
+      ...customContext.github,
+      octokit,
+    },
+  }
+}
+
+async function build(dir: string): Promise<number | void> {
     let buildCmdOptions: exec.ExecOptions = {}; 
     let buildStderr = "";
     buildCmdOptions.listeners = {
@@ -89,17 +78,31 @@ async function run() {
       },
     };
 
-    return exec.exec("helm", ["dependency", "build",  it], buildCmdOptions)
+    return exec.exec("helm", ["dependency", "build",  dir], buildCmdOptions)
             .catch(() => {
               core.error(buildStderr);
-              core.setFailed(`${it} build failed`);
+              core.setFailed(`${dir} build failed`);
             });
-  });
-  await Promise.all(buildPromises);
-  core.debug("Built chart")
+}
 
-  core.debug("Push chart");
-  const pushPromises = diffingDirs.map(async it => {
+async function lint(dir: string): Promise<number | void> {
+    let lintCmdOptions: exec.ExecOptions = {}; 
+    let lintStdout = "";
+    lintCmdOptions.listeners = {
+      stdout: (data: Buffer) => {
+        lintStdout += data.toString();
+      },
+    };
+
+    return exec.exec("helm", ["lint", dir], lintCmdOptions)
+            .catch(() => {
+              core.error(`${dir} lint failed`);
+            }).finally(() => {
+              core.info(lintStdout);
+            });
+}
+
+async function push(ctx: CustomContextWithOctokit, dir: string): Promise<any> {
     let pushCmdOptions: exec.ExecOptions = {}; 
     let pushStderr = "";
     pushCmdOptions.listeners = {
@@ -108,22 +111,50 @@ async function run() {
       },
     };
 
-    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions)
+    return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions)
             .then(() => {
-              const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${it}/Chart.yaml`, 'utf-8')) as any;
-              return octokit.rest.git.createRef({
-                ...context.repo,
+              const chartInfo: { name: string, version: string } = yaml.load(fs.readFileSync(`${dir}/Chart.yaml`, 'utf-8')) as any;
+              return ctx.github.octokit.rest.git.createRef({
+                ...ctx.actions.repo,
                 ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
-                sha: context.payload["after"],
+                sha: ctx.actions.payload["after"],
               });
             })
             .catch(() => {
               core.error(pushStderr);
-              core.setFailed(`${it} push failed`);
+              core.setFailed(`${dir} push failed`);
             });
+}
+
+async function process(ctx: CustomContextWithOctokit,dir: string) {
+  await build(dir);
+  await lint(dir);
+  await push(ctx, dir);
+}
+
+async function run() {
+  const customContext = await prepareContext(context);
+  core.debug(customContext.toString());
+
+  if (customContext.actions.eventName !== "push") {
+    throw new Error(`${context.eventName} not supported`);
+  }
+
+  const ctx = await buildEnv(customContext);
+
+  const { data: diffData } = await ctx.github.octokit.rest.repos.compareCommits({
+    ...ctx.actions.repo,
+    base: ctx.actions.payload["before"],
+    head: ctx.actions.payload["after"],
   });
-  await Promise.all(pushPromises);
-  core.debug("Pushed chart")
+  core.debug(JSON.stringify(diffData.files));
+
+  const diffingFiles = diffData.files ?? [];
+  const diffingDirs = diffingFiles.filter(it => it.filename.includes("Chart.yaml")).map(it => path.dirname(it.filename))
+  core.debug(JSON.stringify(diffingDirs));
+
+  const promises = diffingDirs.map((it) => process(ctx, it));
+  await Promise.all(promises);
 }
 
 run();
