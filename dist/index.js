@@ -11245,106 +11245,114 @@ var safeDump = renamed("safeDump", "dump");
 
 // src/index.ts
 var fs = __toESM(require("fs"));
-async function run() {
-  core2.debug("Loading actions input");
-  const githubToken = core2.getInput("github-token");
-  const chartmuseumUrl = core2.getInput("chartmuseum-url", { required: true });
-  const chartmuseumUsername = core2.getInput("chartmuseum-username", { required: true });
-  const chartmuseumPassword = core2.getInput("chartmuseum-password", { required: true });
-  core2.setSecret(chartmuseumPassword);
-  core2.debug("Loaded actions input");
-  core2.debug(JSON.stringify({ chartmuseumUrl, chartmuseumUsername, chartmuseumPassword }));
-  core2.debug("Checking event type");
-  if (import_github.context.eventName !== "push") {
-    throw new Error(`${import_github.context.eventName} not supported`);
-  }
-  core2.debug("Build octokit");
-  const octokit = (0, import_github.getOctokit)(githubToken);
-  core2.debug("Built octokit");
-  core2.debug("Request diff");
-  const { data } = await octokit.rest.repos.compareCommits({
-    ...import_github.context.repo,
-    base: import_github.context.payload["before"],
-    head: import_github.context.payload["after"]
-  });
-  core2.debug("Requested diff");
-  core2.debug("Process diff");
-  core2.debug(JSON.stringify(data.files));
-  const diffingFiles = data.files ?? [];
-  const diffingDirs = diffingFiles.filter((it) => it.filename.includes("Chart.yaml")).map((it) => import_path.default.dirname(it.filename));
-  core2.debug("Processed diff");
-  core2.debug(JSON.stringify(diffingDirs));
+async function prepareContext(actions) {
+  const customContext = {
+    actions,
+    github: {
+      token: core2.getInput("github-token")
+    },
+    chartmuseum: {
+      url: core2.getInput("chartmuseum-url", { required: true }),
+      username: core2.getInput("chartmuseum-username", { required: true }),
+      password: core2.getInput("chartmuseum-password", { required: true })
+    }
+  };
+  core2.setSecret(customContext.chartmuseum.password);
+  return customContext;
+}
+async function buildEnv(customContext) {
+  const octokit = (0, import_github.getOctokit)(customContext.github.token);
   core2.debug("Install helm");
   await exec.exec("curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3");
   await exec.exec("chmod 700 get_helm.sh");
   await exec.exec("./get_helm.sh");
   core2.debug("Installed helm");
-  core2.debug("Check helm chart valid");
-  const lintPromises = diffingDirs.map(async (it) => {
-    let lintCmdOptions = {};
-    let lintStdout = "";
-    lintCmdOptions.listeners = {
-      stdout: (data2) => {
-        lintStdout += data2.toString();
-      }
-    };
-    return exec.exec("helm", ["lint", it], lintCmdOptions).catch(() => {
-      core2.error(`${it} lint failed`);
-    }).finally(() => {
-      core2.info(lintStdout);
-    });
-  });
-  await Promise.all(lintPromises);
-  core2.debug("Checked helm chart valid");
-  core2.debug("Install helm-push plugin");
   try {
     await exec.exec("helm plugin install https://github.com/chartmuseum/helm-push");
     core2.debug("Installed helm-push plugin");
   } catch (err) {
-    core2.debug("Failed to install helm-push plugin: maybe already exists");
+    core2.info("Failed to install helm-push plugin: maybe already exists");
   }
   core2.debug("Add chartmuseum");
-  await exec.exec(`helm repo add chartmuseum ${chartmuseumUrl} --username ${chartmuseumUsername} --password ${chartmuseumPassword}`);
-  core2.debug("Added chartmuseum");
-  core2.debug("Build chart");
-  const buildPromises = diffingDirs.map(async (it) => {
-    let buildCmdOptions = {};
-    let buildStderr = "";
-    buildCmdOptions.listeners = {
-      stderr: (data2) => {
-        buildStderr += data2.toString();
-      }
-    };
-    return exec.exec("helm", ["dependency", "build", it], buildCmdOptions).catch(() => {
-      core2.error(buildStderr);
-      core2.setFailed(`${it} build failed`);
-    });
+  await exec.exec(`helm repo add chartmuseum ${customContext.chartmuseum.url} --username ${customContext.chartmuseum.username} --password ${customContext.chartmuseum.password}`);
+  return {
+    ...customContext,
+    github: {
+      ...customContext.github,
+      octokit
+    }
+  };
+}
+async function build(dir) {
+  let buildCmdOptions = {};
+  let buildStderr = "";
+  buildCmdOptions.listeners = {
+    stderr: (data) => {
+      buildStderr += data.toString();
+    }
+  };
+  return exec.exec("helm", ["dependency", "build", dir], buildCmdOptions).catch(() => {
+    core2.error(buildStderr);
+    core2.setFailed(`${dir} build failed`);
   });
-  await Promise.all(buildPromises);
-  core2.debug("Built chart");
-  core2.debug("Push chart");
-  const pushPromises = diffingDirs.map(async (it) => {
-    let pushCmdOptions = {};
-    let pushStderr = "";
-    pushCmdOptions.listeners = {
-      stderr: (data2) => {
-        pushStderr += data2.toString();
-      }
-    };
-    return exec.exec("helm", ["cm-push", it, "chartmuseum"], pushCmdOptions).then(() => {
-      const chartInfo = load(fs.readFileSync(`${it}/Chart.yaml`, "utf-8"));
-      return octokit.rest.git.createRef({
-        ...import_github.context.repo,
-        ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
-        sha: import_github.context.payload["after"]
-      });
-    }).catch(() => {
-      core2.error(pushStderr);
-      core2.setFailed(`${it} push failed`);
-    });
+}
+async function lint(dir) {
+  let lintCmdOptions = {};
+  let lintStdout = "";
+  lintCmdOptions.listeners = {
+    stdout: (data) => {
+      lintStdout += data.toString();
+    }
+  };
+  return exec.exec("helm", ["lint", dir], lintCmdOptions).catch(() => {
+    core2.error(`${dir} lint failed`);
+  }).finally(() => {
+    core2.info(lintStdout);
   });
-  await Promise.all(pushPromises);
-  core2.debug("Pushed chart");
+}
+async function push(ctx, dir) {
+  let pushCmdOptions = {};
+  let pushStderr = "";
+  pushCmdOptions.listeners = {
+    stderr: (data) => {
+      pushStderr += data.toString();
+    }
+  };
+  return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions).then(() => {
+    const chartInfo = load(fs.readFileSync(`${dir}/Chart.yaml`, "utf-8"));
+    return ctx.github.octokit.rest.git.createRef({
+      ...ctx.actions.repo,
+      ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
+      sha: ctx.actions.payload["after"]
+    });
+  }).catch(() => {
+    core2.error(pushStderr);
+    core2.setFailed(`${dir} push failed`);
+  });
+}
+async function process2(ctx, dir) {
+  await build(dir);
+  await lint(dir);
+  await push(ctx, dir);
+}
+async function run() {
+  const customContext = await prepareContext(import_github.context);
+  core2.debug(customContext.toString());
+  if (customContext.actions.eventName !== "push") {
+    throw new Error(`${import_github.context.eventName} not supported`);
+  }
+  const ctx = await buildEnv(customContext);
+  const { data: diffData } = await ctx.github.octokit.rest.repos.compareCommits({
+    ...ctx.actions.repo,
+    base: ctx.actions.payload["before"],
+    head: ctx.actions.payload["after"]
+  });
+  core2.debug(JSON.stringify(diffData.files));
+  const diffingFiles = diffData.files ?? [];
+  const diffingDirs = diffingFiles.filter((it) => it.filename.includes("Chart.yaml")).map((it) => import_path.default.dirname(it.filename));
+  core2.debug(JSON.stringify(diffingDirs));
+  const promises = diffingDirs.map((it) => process2(ctx, it));
+  await Promise.all(promises);
 }
 run();
 /*!
