@@ -881,18 +881,18 @@ var require_tunnel = __commonJS({
             res.statusCode
           );
           socket.destroy();
-          var error2 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
-          error2.code = "ECONNRESET";
-          options.request.emit("error", error2);
+          var error = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
+          error.code = "ECONNRESET";
+          options.request.emit("error", error);
           self.removeSocket(placeholder);
           return;
         }
         if (head.length > 0) {
           debug2("got illegal response body from proxy");
           socket.destroy();
-          var error2 = new Error("got illegal response body from proxy");
-          error2.code = "ECONNRESET";
-          options.request.emit("error", error2);
+          var error = new Error("got illegal response body from proxy");
+          error.code = "ECONNRESET";
+          options.request.emit("error", error);
           self.removeSocket(placeholder);
           return;
         }
@@ -907,9 +907,9 @@ var require_tunnel = __commonJS({
           cause.message,
           cause.stack
         );
-        var error2 = new Error("tunneling socket could not be established, cause=" + cause.message);
-        error2.code = "ECONNRESET";
-        options.request.emit("error", error2);
+        var error = new Error("tunneling socket could not be established, cause=" + cause.message);
+        error.code = "ECONNRESET";
+        options.request.emit("error", error);
         self.removeSocket(placeholder);
       }
     };
@@ -1701,12 +1701,12 @@ var require_oidc_utils = __commonJS({
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
           const httpclient = OidcClient.createHttpClient();
-          const res = yield httpclient.getJson(id_token_url).catch((error2) => {
+          const res = yield httpclient.getJson(id_token_url).catch((error) => {
             throw new Error(`Failed to get ID Token. 
  
-        Error Code : ${error2.statusCode}
+        Error Code : ${error.statusCode}
  
-        Error Message: ${error2.result.message}`);
+        Error Message: ${error.result.message}`);
           });
           const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
           if (!id_token) {
@@ -1727,8 +1727,8 @@ var require_oidc_utils = __commonJS({
             const id_token = yield OidcClient.getCall(id_token_url);
             core_1.setSecret(id_token);
             return id_token;
-          } catch (error2) {
-            throw new Error(`Error message: ${error2.message}`);
+          } catch (error) {
+            throw new Error(`Error message: ${error.message}`);
           }
         });
       }
@@ -1797,12 +1797,12 @@ var require_summary = __commonJS({
           return this._filePath;
         });
       }
-      wrap(tag, content, attrs = {}) {
+      wrap(tag2, content, attrs = {}) {
         const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
         if (!content) {
-          return `<${tag}${htmlAttrs}>`;
+          return `<${tag2}${htmlAttrs}>`;
         }
-        return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+        return `<${tag2}${htmlAttrs}>${content}</${tag2}>`;
       }
       write(options) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -1841,9 +1841,9 @@ var require_summary = __commonJS({
         return this.addRaw(element).addEOL();
       }
       addList(items, ordered = false) {
-        const tag = ordered ? "ol" : "ul";
+        const tag2 = ordered ? "ol" : "ul";
         const listItems = items.map((item) => this.wrap("li", item)).join("");
-        const element = this.wrap(tag, listItems);
+        const element = this.wrap(tag2, listItems);
         return this.addRaw(element).addEOL();
       }
       addTable(rows) {
@@ -1853,9 +1853,9 @@ var require_summary = __commonJS({
               return this.wrap("td", cell);
             }
             const { header, data, colspan, rowspan } = cell;
-            const tag = header ? "th" : "td";
+            const tag2 = header ? "th" : "td";
             const attrs = Object.assign(Object.assign({}, colspan && { colspan }), rowspan && { rowspan });
-            return this.wrap(tag, data, attrs);
+            return this.wrap(tag2, data, attrs);
           }).join("");
           return this.wrap("tr", cells);
         }).join("");
@@ -1873,8 +1873,8 @@ var require_summary = __commonJS({
         return this.addRaw(element).addEOL();
       }
       addHeading(text, level) {
-        const tag = `h${level}`;
-        const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
+        const tag2 = `h${level}`;
+        const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag2) ? tag2 : "h1";
         const element = this.wrap(allowedTag, text);
         return this.addRaw(element).addEOL();
       }
@@ -2094,7 +2094,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     exports.setCommandEcho = setCommandEcho;
     function setFailed2(message) {
       process.exitCode = ExitCode.Failure;
-      error2(message);
+      error(message);
     }
     exports.setFailed = setFailed2;
     function isDebug() {
@@ -2105,10 +2105,10 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       command_1.issueCommand("debug", {}, message);
     }
     exports.debug = debug2;
-    function error2(message, properties = {}) {
+    function error(message, properties = {}) {
       command_1.issueCommand("error", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
-    exports.error = error2;
+    exports.error = error;
     function warning(message, properties = {}) {
       command_1.issueCommand("warning", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
@@ -2365,8 +2365,8 @@ var require_add = __commonJS({
       }
       if (kind === "error") {
         hook = function(method, options) {
-          return Promise.resolve().then(method.bind(null, options)).catch(function(error2) {
-            return orig(error2, options);
+          return Promise.resolve().then(method.bind(null, options)).catch(function(error) {
+            return orig(error, options);
           });
         };
       }
@@ -3053,21 +3053,21 @@ var require_tr46 = __commonJS({
         label = punycode.toUnicode(label);
         processing_option = PROCESSING_OPTIONS.NONTRANSITIONAL;
       }
-      var error2 = false;
+      var error = false;
       if (normalize(label) !== label || label[3] === "-" && label[4] === "-" || label[0] === "-" || label[label.length - 1] === "-" || label.indexOf(".") !== -1 || label.search(combiningMarksRegex) === 0) {
-        error2 = true;
+        error = true;
       }
       var len = countSymbols(label);
       for (var i = 0; i < len; ++i) {
         var status = findStatus(label.codePointAt(i));
         if (processing === PROCESSING_OPTIONS.TRANSITIONAL && status[1] !== "valid" || processing === PROCESSING_OPTIONS.NONTRANSITIONAL && status[1] !== "valid" && status[1] !== "deviation") {
-          error2 = true;
+          error = true;
           break;
         }
       }
       return {
         label,
-        error: error2
+        error
       };
     }
     function processing(domain_name, useSTD3, processing_option) {
@@ -4717,8 +4717,8 @@ var require_lib3 = __commonJS({
       this.timeout = timeout;
       if (body instanceof Stream) {
         body.on("error", function(err) {
-          const error2 = err.name === "AbortError" ? err : new FetchError(`Invalid response body while trying to fetch ${_this.url}: ${err.message}`, "system", err);
-          _this[INTERNALS].error = error2;
+          const error = err.name === "AbortError" ? err : new FetchError(`Invalid response body while trying to fetch ${_this.url}: ${err.message}`, "system", err);
+          _this[INTERNALS].error = error;
         });
       }
     }
@@ -5448,14 +5448,14 @@ var require_lib3 = __commonJS({
         const signal = request.signal;
         let response = null;
         const abort = function abort2() {
-          let error2 = new AbortError("The user aborted a request.");
-          reject(error2);
+          let error = new AbortError("The user aborted a request.");
+          reject(error);
           if (request.body && request.body instanceof Stream.Readable) {
-            request.body.destroy(error2);
+            request.body.destroy(error);
           }
           if (!response || !response.body)
             return;
-          response.body.emit("error", error2);
+          response.body.emit("error", error);
         };
         if (signal && signal.aborted) {
           abort();
@@ -5850,7 +5850,7 @@ var require_dist_node5 = __commonJS({
         }
         if (status >= 400) {
           const data = await getResponseData(response);
-          const error2 = new requestError.RequestError(toErrorMessage(data), status, {
+          const error = new requestError.RequestError(toErrorMessage(data), status, {
             response: {
               url,
               status,
@@ -5859,7 +5859,7 @@ var require_dist_node5 = __commonJS({
             },
             request: requestOptions
           });
-          throw error2;
+          throw error;
         }
         return getResponseData(response);
       }).then((data) => {
@@ -5869,10 +5869,10 @@ var require_dist_node5 = __commonJS({
           headers,
           data
         };
-      }).catch((error2) => {
-        if (error2 instanceof requestError.RequestError)
-          throw error2;
-        throw new requestError.RequestError(error2.message, 500, {
+      }).catch((error) => {
+        if (error instanceof requestError.RequestError)
+          throw error;
+        throw new requestError.RequestError(error.message, 500, {
           request: requestOptions
         });
       });
@@ -7373,9 +7373,9 @@ var require_dist_node10 = __commonJS({
               return {
                 value: normalizedResponse
               };
-            } catch (error2) {
-              if (error2.status !== 409)
-                throw error2;
+            } catch (error) {
+              if (error.status !== 409)
+                throw error;
               url = "";
               return {
                 value: {
@@ -8346,7 +8346,7 @@ var require_toolrunner = __commonJS({
               this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
               state.CheckComplete();
             });
-            state.on("done", (error2, exitCode) => {
+            state.on("done", (error, exitCode) => {
               if (stdbuffer.length > 0) {
                 this.emit("stdline", stdbuffer);
               }
@@ -8354,8 +8354,8 @@ var require_toolrunner = __commonJS({
                 this.emit("errline", errbuffer);
               }
               cp.removeAllListeners();
-              if (error2) {
-                reject(error2);
+              if (error) {
+                reject(error);
               } else {
                 resolve(exitCode);
               }
@@ -8450,14 +8450,14 @@ var require_toolrunner = __commonJS({
         this.emit("debug", message);
       }
       _setResult() {
-        let error2;
+        let error;
         if (this.processExited) {
           if (this.processError) {
-            error2 = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
+            error = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
           } else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
-            error2 = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+            error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
           } else if (this.processStderr && this.options.failOnStdErr) {
-            error2 = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
+            error = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
           }
         }
         if (this.timeout) {
@@ -8465,7 +8465,7 @@ var require_toolrunner = __commonJS({
           this.timeout = null;
         }
         this.done = true;
-        this.emit("done", error2, this.processExitCode);
+        this.emit("done", error, this.processExitCode);
       }
       static HandleTimeout(state) {
         if (state.done) {
@@ -8786,15 +8786,15 @@ function compileStyleAliases(map2) {
   }
   return result;
 }
-function Type$1(tag, options) {
+function Type$1(tag2, options) {
   options = options || {};
   Object.keys(options).forEach(function(name) {
     if (TYPE_CONSTRUCTOR_OPTIONS.indexOf(name) === -1) {
-      throw new exception('Unknown option "' + name + '" is met in definition of "' + tag + '" YAML type.');
+      throw new exception('Unknown option "' + name + '" is met in definition of "' + tag2 + '" YAML type.');
     }
   });
   this.options = options;
-  this.tag = tag;
+  this.tag = tag2;
   this.kind = options["kind"] || null;
   this.resolve = options["resolve"] || function() {
     return true;
@@ -8810,7 +8810,7 @@ function Type$1(tag, options) {
   this.multi = options["multi"] || false;
   this.styleAliases = compileStyleAliases(options["styleAliases"] || null);
   if (YAML_NODE_KINDS.indexOf(this.kind) === -1) {
-    throw new exception('Unknown kind "' + this.kind + '" is specified for "' + tag + '" YAML type.');
+    throw new exception('Unknown kind "' + this.kind + '" is specified for "' + tag2 + '" YAML type.');
   }
 }
 var type = Type$1;
@@ -10668,22 +10668,22 @@ var DEPRECATED_BOOLEANS_SYNTAX = [
 ];
 var DEPRECATED_BASE60_SYNTAX = /^[-+]?[0-9_]+(?::[0-9_]+)+(?:\.[0-9_]*)?$/;
 function compileStyleMap(schema2, map2) {
-  var result, keys, index, length, tag, style, type2;
+  var result, keys, index, length, tag2, style, type2;
   if (map2 === null)
     return {};
   result = {};
   keys = Object.keys(map2);
   for (index = 0, length = keys.length; index < length; index += 1) {
-    tag = keys[index];
-    style = String(map2[tag]);
-    if (tag.slice(0, 2) === "!!") {
-      tag = "tag:yaml.org,2002:" + tag.slice(2);
+    tag2 = keys[index];
+    style = String(map2[tag2]);
+    if (tag2.slice(0, 2) === "!!") {
+      tag2 = "tag:yaml.org,2002:" + tag2.slice(2);
     }
-    type2 = schema2.compiledTypeMap["fallback"][tag];
+    type2 = schema2.compiledTypeMap["fallback"][tag2];
     if (type2 && _hasOwnProperty.call(type2.styleAliases, style)) {
       style = type2.styleAliases[style];
     }
-    result[tag] = style;
+    result[tag2] = style;
   }
   return result;
 }
@@ -11291,9 +11291,9 @@ async function build(dir) {
       buildStderr += data.toString();
     }
   };
-  return exec.exec("helm", ["dependency", "build", dir], buildCmdOptions).catch(() => {
-    core2.error(buildStderr);
-    core2.setFailed(`${dir} build failed`);
+  return exec.exec("helm", ["dependency", "build", dir], buildCmdOptions).catch((reason) => {
+    core2.debug(buildStderr);
+    throw reason;
   });
 }
 async function lint(dir) {
@@ -11304,13 +11304,14 @@ async function lint(dir) {
       lintStdout += data.toString();
     }
   };
-  return exec.exec("helm", ["lint", dir], lintCmdOptions).catch(() => {
-    core2.error(`${dir} lint failed`);
+  return exec.exec("helm", ["lint", dir], lintCmdOptions).catch((reason) => {
+    core2.debug(`${dir} lint failed`);
+    throw reason;
   }).finally(() => {
     core2.info(lintStdout);
   });
 }
-async function push(ctx, dir) {
+async function push(dir) {
   let pushCmdOptions = {};
   let pushStderr = "";
   pushCmdOptions.listeners = {
@@ -11318,22 +11319,24 @@ async function push(ctx, dir) {
       pushStderr += data.toString();
     }
   };
-  return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions).then(() => {
-    const chartInfo = load(fs.readFileSync(`${dir}/Chart.yaml`, "utf-8"));
-    return ctx.github.octokit.rest.git.createRef({
-      ...ctx.actions.repo,
-      ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
-      sha: ctx.actions.payload["after"]
-    });
-  }).catch(() => {
-    core2.error(pushStderr);
-    core2.setFailed(`${dir} push failed`);
+  return exec.exec("helm", ["cm-push", dir, "chartmuseum"], pushCmdOptions).catch((reason) => {
+    core2.debug(pushStderr);
+    throw reason;
+  });
+}
+async function tag(ctx, dir) {
+  const chartInfo = load(fs.readFileSync(`${dir}/Chart.yaml`, "utf-8"));
+  await ctx.github.octokit.rest.git.createRef({
+    ...ctx.actions.repo,
+    ref: `refs/tags/${chartInfo.name}-${chartInfo.version}`,
+    sha: ctx.actions.payload["after"]
   });
 }
 async function process2(ctx, dir) {
   await build(dir);
   await lint(dir);
-  await push(ctx, dir);
+  await push(dir);
+  await tag(ctx, dir);
 }
 async function run() {
   const customContext = await prepareContext(import_github.context);
@@ -11352,7 +11355,14 @@ async function run() {
   const diffingDirs = diffingFiles.filter((it) => it.filename.includes("Chart.yaml")).map((it) => import_path.default.dirname(it.filename));
   core2.debug(JSON.stringify(diffingDirs));
   const promises = diffingDirs.map((it) => process2(ctx, it));
-  await Promise.all(promises);
+  await Promise.allSettled(promises).then((results) => {
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        core2.setFailed(result.reason);
+        throw result.reason;
+      }
+    });
+  });
 }
 run();
 /*!
