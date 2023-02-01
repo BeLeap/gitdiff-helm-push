@@ -146,7 +146,7 @@ async function run() {
   const customContext = await prepareContext(context);
   core.debug(customContext.toString());
 
-  if (customContext.actions.eventName !== "push") {
+  if (customContext.actions.eventName !== "push" && customContext.mode === "push") {
     throw new Error(`${context.eventName} not supported`);
   }
 
