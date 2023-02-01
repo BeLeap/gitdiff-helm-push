@@ -11349,7 +11349,7 @@ async function process2(ctx, dir) {
 async function run() {
   const customContext = await prepareContext(import_github.context);
   core2.debug(customContext.toString());
-  if (customContext.actions.eventName !== "push") {
+  if (customContext.actions.eventName !== "push" && customContext.mode === "push") {
     throw new Error(`${import_github.context.eventName} not supported`);
   }
   const ctx = await buildEnv(customContext);
