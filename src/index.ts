@@ -19,6 +19,7 @@ type ChartmuseumContext = {
 
 type CustomContext = {
   actions: ActionsContext;
+  mode: "push" | "check";
   github: GithubContext;
   chartmuseum: ChartmuseumContext;
 }
@@ -26,6 +27,7 @@ type CustomContext = {
 async function prepareContext(actions: ActionsContext): Promise<CustomContext> {
   const customContext: CustomContext = {
     actions: actions,
+    mode: core.getInput("mode", { required: true }) === "check" ? "check" : "push",
     github: {
       token: core.getInput("github-token"),
     },
@@ -133,8 +135,11 @@ async function tag(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
 async function process(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
     await build(dir)
     await lint(dir);
-    await push(dir);
-    await tag(ctx, dir);
+
+    if (ctx.mode === "push") {
+      await push(dir);
+      await tag(ctx, dir);
+    }
 }
 
 async function run() {
