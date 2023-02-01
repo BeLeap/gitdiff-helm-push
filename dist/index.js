@@ -11248,6 +11248,7 @@ var fs = __toESM(require("fs"));
 async function prepareContext(actions) {
   const customContext = {
     actions,
+    mode: core2.getInput("mode", { required: true }) === "check" ? "check" : "push",
     github: {
       token: core2.getInput("github-token")
     },
@@ -11340,8 +11341,10 @@ async function tag(ctx, dir) {
 async function process2(ctx, dir) {
   await build(dir);
   await lint(dir);
-  await push(dir);
-  await tag(ctx, dir);
+  if (ctx.mode === "push") {
+    await push(dir);
+    await tag(ctx, dir);
+  }
 }
 async function run() {
   const customContext = await prepareContext(import_github.context);
