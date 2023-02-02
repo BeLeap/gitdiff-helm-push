@@ -108,7 +108,7 @@ async function lint(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
         await ctx.github.octokit.rest.issues.createComment({
           ...ctx.actions.repo,
           issue_number: ctx.actions.issue.number,
-          body: lintStderr,
+          body: `${lintStderr}\n\`\`\`\n${lintStdout}\n\`\`\``,
         });
       }
       core.warning(`${dir} lint failed`);
