@@ -11299,17 +11299,28 @@ async function build(dir) {
     throw error2;
   }
 }
-async function lint(dir) {
+async function lint(ctx, dir) {
   let lintCmdOptions = {};
   let lintStdout = "";
+  let lintStderr = "";
   lintCmdOptions.listeners = {
     stdout: (data) => {
       lintStdout += data.toString();
+    },
+    stderr: (data) => {
+      lintStderr += data.toString();
     }
   };
   try {
     await exec.exec("helm", ["lint", dir], lintCmdOptions);
   } catch {
+    if (ctx.actions.eventName === "pull_request") {
+      await ctx.github.octokit.rest.issues.createComment({
+        ...ctx.actions.repo,
+        issue_number: ctx.actions.issue.number,
+        body: lintStderr
+      });
+    }
     core2.warning(`${dir} lint failed`);
   } finally {
     core2.info(lintStdout);
@@ -11340,7 +11351,7 @@ async function tag(ctx, dir) {
 }
 async function process2(ctx, dir) {
   await build(dir);
-  await lint(dir);
+  await lint(ctx, dir);
   if (ctx.mode === "push") {
     await push(dir);
     await tag(ctx, dir);
