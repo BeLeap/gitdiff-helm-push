@@ -11318,7 +11318,10 @@ async function lint(ctx, dir) {
       await ctx.github.octokit.rest.issues.createComment({
         ...ctx.actions.repo,
         issue_number: ctx.actions.issue.number,
-        body: lintStderr
+        body: `${lintStderr}
+\`\`\`
+${lintStdout}
+\`\`\``
       });
     }
     core2.warning(`${dir} lint failed`);
