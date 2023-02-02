@@ -11353,10 +11353,24 @@ async function run() {
     throw new Error(`${import_github.context.eventName} not supported`);
   }
   const ctx = await buildEnv(customContext);
+  let base;
+  let head;
+  switch (ctx.actions.eventName) {
+    case "pull_request":
+      base = ctx.actions.payload.pull_request["base"]["sha"];
+      head = ctx.actions.payload.pull_request["head"]["sha"];
+      break;
+    case "push":
+      base = ctx.actions.payload["before"];
+      head = ctx.actions.payload["after"];
+      break;
+    default:
+      throw new Error(`${import_github.context.eventName} not supported`);
+  }
   const { data: diffData } = await ctx.github.octokit.rest.repos.compareCommits({
     ...ctx.actions.repo,
-    base: ctx.actions.payload["before"],
-    head: ctx.actions.payload["after"]
+    base,
+    head
   });
   core2.debug(JSON.stringify(diffData.files));
   const diffingFiles = diffData.files ?? [];
