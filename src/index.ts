@@ -88,18 +88,29 @@ async function build(dir: string): Promise<void> {
     }
 }
 
-async function lint(dir: string): Promise<void> {
+async function lint(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
     let lintCmdOptions: exec.ExecOptions = {}; 
     let lintStdout = "";
+    let lintStderr = "";
     lintCmdOptions.listeners = {
       stdout: (data: Buffer) => {
         lintStdout += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        lintStderr += data.toString();
       },
     };
 
     try {
       await exec.exec("helm", ["lint", dir], lintCmdOptions);
     } catch {
+      if (ctx.actions.eventName === "pull_request") {
+        await ctx.github.octokit.rest.issues.createComment({
+          ...ctx.actions.repo,
+          issue_number: ctx.actions.issue.number,
+          body: lintStderr,
+        });
+      }
       core.warning(`${dir} lint failed`);
     } finally {
       core.info(lintStdout);
@@ -134,7 +145,7 @@ async function tag(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
 
 async function process(ctx: CustomContextWithOctokit, dir: string): Promise<void> {
     await build(dir)
-    await lint(dir);
+    await lint(ctx, dir);
 
     if (ctx.mode === "push") {
       await push(dir);
